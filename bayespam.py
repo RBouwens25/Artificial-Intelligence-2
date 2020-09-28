@@ -38,6 +38,8 @@ class Bayespam():
         self.regular_wrong = 0
         self.spam_correct = 0
         self.spam_wrong = 0
+        self.priori_regular = None 
+        self.priori_spam = None 
 
     def list_dirs(self, path):
         """
@@ -135,7 +137,7 @@ class Bayespam():
                 for idx in range(len(split_line)):
                     token = split_line[idx]
                     ##Remove all non-alphanumeric characters from the string.
-                    token = re.sub(r'[^a-z-]', '', token)
+                    token = re.sub(r'[^a-z]', '', token)
 
                     ##Only handles tokens with more than 3 characters
                     if(len(token) > 3):
@@ -194,10 +196,8 @@ class Bayespam():
         # print("N all messages: ", n_messages_total)
 
         ## compute a priori class possibilities
-        priori_regular = n_messages_regular / n_messages_total
-        priori_regular = math.log(10, priori_regular)
-        priori_spam = n_messages_spam / n_messages_total
-        priori_spam = math.log(10, priori_spam)
+        self.priori_regular = math.log(10, n_messages_regular / n_messages_total)
+        self.priori_spam = math.log(10, n_messages_spam / n_messages_total)
 
         # print("a priori regular: ", priori_regular)
         # print("a priori spam: ", priori_spam)
@@ -209,12 +209,13 @@ class Bayespam():
             n_words_regular += counter.counter_regular
             n_words_spam += counter.counter_spam
 
-        tuner = 1 / (n_words_spam + n_words_regular)
+        epsilon = 1
+        tuner = epsilon / (n_words_spam + n_words_regular)
         tuner = math.log(10,tuner)
 
         for word, counter in self.vocab.items():
             temp_reg = counter.counter_regular / n_words_regular
-            temp_spam = counter.counter_spam/n_words_spam
+            temp_spam = counter.counter_spam / n_words_spam
             if temp_reg != 0:
                 temp_reg = math.log(10, temp_reg)
                 self.class_conditional_regular[word] = temp_reg
@@ -233,8 +234,8 @@ class Bayespam():
         ## Test every message in regular list
         for msg in self.regular_list:
             ## The probabilities for this message start with the probability of any message to me regular or spam, which is 50/50
-            msg_prob_regular = math.log(10, 0.5)
-            msg_prob_spam = math.log(10, 0.5)
+            msg_prob_regular = self.priori_regular
+            msg_prob_spam = self.priori_spam 
 
             ## Get all the words in this message
             message = self.read_words(msg)
