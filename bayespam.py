@@ -100,7 +100,7 @@ class Bayespam():
                     for idx in range(len(split_line)):
                         token = split_line[idx]
                         ##Remove all non-alphanumeric characters from the string.
-                        token = re.sub(r'[^a-z-]', '', token)
+                        token = re.sub(r'[^a-z]', '', token)
 
                         ##Only handles tokens with more than 3 characters
                         if(len(token) > 3):
