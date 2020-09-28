@@ -312,7 +312,7 @@ def main():
     bayespam.read_messages(MessageType.SPAM)
 
     # bayespam.print_vocab()
-    bayespam.write_vocab("vocab.txt")
+    bayespam.write_vocab("vocab2.txt")
 
     ## Train
     bayespam.train()
@@ -324,7 +324,7 @@ def main():
     bayespam.list_dirs(test_path)
 
     # bayespam.print_vocab()
-    bayespam.write_vocab("vocab.txt")
+    bayespam.write_vocab("vocab2.txt")
 
     ## Test
     bayespam.test()
