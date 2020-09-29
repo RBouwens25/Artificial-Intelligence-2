@@ -37,6 +37,12 @@ class Bayespam():
         self.priori_regular = None 
         self.priori_spam = None 
 
+	##parameters
+        self.epsilon = 1 
+        self.min_word_len = 4 
+        self.freq_threshold = 10 
+
+
     def list_dirs(self, path):
         """
         Creates a list of both the regular and spam messages in the given file path.
@@ -96,7 +102,7 @@ class Bayespam():
                     split_line = line.split(" ")
 
                     ##Only handles tokens with more than 3 characters
-                    split_line = [x for x in split_line if len(x) > 3]
+                    split_line = [x for x in split_line if len(x) >= self.min_word_len]
 
                     # Loop through the tokens
                     for idx in range(len(split_line)-1):
@@ -133,7 +139,7 @@ class Bayespam():
                 split_line = line.split(" ")
 
                 ##Only handles tokens with more than 3 characters
-                split_line = [x for x in split_line if len(x) > 3]
+                split_line = [x for x in split_line if len(x) >= self.min_word_len]
 
                 # Loop through the tokens
                 for idx in range(len(split_line)-1):
@@ -141,6 +147,7 @@ class Bayespam():
                     bigram = (re.sub(r'[^a-z]', '', split_line[idx]),re.sub(r'[^a-z]', '', split_line[idx+1]))
 
                     bigrams.append(bigram)
+
 
         except Exception as e:
             print("Error while reading message %s: " % msg, e)
@@ -208,23 +215,23 @@ class Bayespam():
             n_bigrams_regular += counter.counter_regular
             n_bigrams_spam += counter.counter_spam
 
-        epsilon = 1
-        tuner = epsilon / (n_bigrams_spam + n_bigrams_regular)
+        tuner = self.epsilon / (n_bigrams_spam + n_bigrams_regular)
         tuner = math.log(10,tuner)
 
         for bigram, counter in self.vocab.items():
-            temp_reg = counter.counter_regular / n_bigrams_regular
-            temp_spam = counter.counter_spam / n_bigrams_spam
-            if temp_reg != 0:
-                temp_reg = math.log(10, temp_reg)
-                self.class_conditional_regular[bigram] = temp_reg
-            else:
-                self.class_conditional_regular[bigram] = tuner
-            if temp_spam != 0:
-                temp_spam = math.log(10, temp_spam)
-                self.class_conditional_spam[bigram] = temp_spam
-            else:
-                self.class_conditional_spam[bigram] = tuner
+            if counter.counter_regular + counter.counter_spam > self.freq_threshold:
+                temp_reg = counter.counter_regular / n_bigrams_regular
+                temp_spam = counter.counter_spam / n_bigrams_spam
+                if temp_reg != 0:
+                    temp_reg = math.log(10, temp_reg)
+                    self.class_conditional_regular[bigram] = temp_reg
+                else:
+                    self.class_conditional_regular[bigram] = tuner
+                if temp_spam != 0:
+                    temp_spam = math.log(10, temp_spam)
+                    self.class_conditional_spam[bigram] = temp_spam
+                else:
+                    self.class_conditional_spam[bigram] = tuner
 
     def test(self):
         ## The constant alpha is the same for regular and spam messages, and we want to compare regular and spam messages,
