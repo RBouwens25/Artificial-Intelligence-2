@@ -1,3 +1,8 @@
+# AI2 assignment 2 Bayes spam filter (bigram)
+# Benjamin Dinh         (s.......)
+# Rachelle Bouwens      (s3661393)
+# Janneke van Hulten    (s3658384)
+
 import argparse
 import os
 import re, math
@@ -17,7 +22,6 @@ class Counter():
     def increment_counter(self, message_type):
         """
         Increment a word's frequency count by one, depending on whether it occurred in a regular or spam message.
-
         :param message_type: The message type to be parsed (MessageType.REGULAR or MessageType.SPAM)
         :return: None
         """
@@ -34,19 +38,18 @@ class Bayespam():
         self.vocab = {}
         self.class_conditional_regular = {}
         self.class_conditional_spam = {}
-        self.priori_regular = None 
-        self.priori_spam = None 
+        self.priori_regular = None
+        self.priori_spam = None
 
-	##parameters
-        self.epsilon = 1 
-        self.min_word_len = 4 
-        self.freq_threshold = 10 
+	    ##parameters
+        self.epsilon = 1
+        self.min_word_len = 4
+        self.freq_threshold = 10
 
 
     def list_dirs(self, path):
         """
         Creates a list of both the regular and spam messages in the given file path.
-
         :param path: File path of the directory containing either the training or test set
         :return: None
         """
@@ -158,7 +161,6 @@ class Bayespam():
     def print_vocab(self):
         """
         Print each word in the vocabulary, plus the amount of times it occurs in regular and spam messages.
-
         :return: None
         """
         for bigram, counter in self.vocab.items():
@@ -168,7 +170,6 @@ class Bayespam():
     def write_vocab(self, destination_fp, sort_by_freq=False):
         """
         Writes the current vocabulary to a separate .txt file for easier inspection.
-
         :param destination_fp: Destination file path of the vocabulary file
         :param sort_by_freq: Set to True to sort the vocab by total frequency (descending order)
         :return: None
@@ -211,13 +212,16 @@ class Bayespam():
         n_bigrams_regular = 0
         n_bigrams_spam = 0
 
+        ## count all the bigrams appearing in regular messages and spam messages
         for bigram, counter in self.vocab.items():
             n_bigrams_regular += counter.counter_regular
             n_bigrams_spam += counter.counter_spam
 
+        ## in case of a zero probability, tuner is used instead
         tuner = self.epsilon / (n_bigrams_spam + n_bigrams_regular)
         tuner = math.log(10,tuner)
 
+        ## compute for every bigram the two class conditional likelihoods
         for bigram, counter in self.vocab.items():
             if counter.counter_regular + counter.counter_spam > self.freq_threshold:
                 temp_reg = counter.counter_regular / n_bigrams_regular
@@ -225,12 +229,12 @@ class Bayespam():
                 if temp_reg != 0:
                     temp_reg = math.log(10, temp_reg)
                     self.class_conditional_regular[bigram] = temp_reg
-                else:
+                else: ## probability is zero, so tuner is used
                     self.class_conditional_regular[bigram] = tuner
                 if temp_spam != 0:
                     temp_spam = math.log(10, temp_spam)
                     self.class_conditional_spam[bigram] = temp_spam
-                else:
+                else: ## probability is zero, so tuner is used
                     self.class_conditional_spam[bigram] = tuner
 
     def test(self):
@@ -246,7 +250,7 @@ class Bayespam():
         for msg in self.regular_list:
             ## The probabilities for this message start with the probability of any message to be regular or spam
             msg_prob_regular = self.priori_regular
-            msg_prob_spam = self.priori_spam 
+            msg_prob_spam = self.priori_spam
 
             ## Get all the bigrams in this message
             message = self.read_words(msg)
@@ -268,7 +272,7 @@ class Bayespam():
         for msg in self.spam_list:
             ## The probabilities for this message start with the probability of any message to be regular or spam
             msg_prob_regular = self.priori_regular
-            msg_prob_spam = self.priori_spam 
+            msg_prob_spam = self.priori_spam
 
             ## Get all the words in this message
             message = self.read_words(msg)
@@ -351,7 +355,6 @@ def main():
     5) Bayes rule must be applied on new messages, followed by argmax classification
     6) Errors must be computed on the test set (FAR = false accept rate (misses), FRR = false reject rate (false alarms))
     7) Improve the code and the performance (speed, accuracy)
-
     Use the same steps to create a class BigramBayespam which implements a classifier using a vocabulary consisting of bigrams
     """
 
