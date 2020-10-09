@@ -1,12 +1,18 @@
+# AI2 assignment 2 Bayes spam filter
+# Benjamin Dinh         (s.......)
+# Rachelle Bouwens      (s3661393)
+# Janneke van Hulten    (s3658384)
 import argparse
 import os
 import re, math
 
 from enum import Enum
 
+
 class MessageType(Enum):
     REGULAR = 1,
     SPAM = 2
+
 
 class Counter():
 
@@ -17,7 +23,6 @@ class Counter():
     def increment_counter(self, message_type):
         """
         Increment a word's frequency count by one, depending on whether it occurred in a regular or spam message.
-
         :param message_type: The message type to be parsed (MessageType.REGULAR or MessageType.SPAM)
         :return: None
         """
@@ -25,6 +30,7 @@ class Counter():
             self.counter_regular += 1
         else:
             self.counter_spam += 1
+
 
 class Bayespam():
 
@@ -34,13 +40,12 @@ class Bayespam():
         self.vocab = {}
         self.class_conditional_regular = {}
         self.class_conditional_spam = {}
-        self.priori_regular = None 
-        self.priori_spam = None 
+        self.priori_regular = None
+        self.priori_spam = None
 
     def list_dirs(self, path):
         """
         Creates a list of both the regular and spam messages in the given file path.
-
         :param path: File path of the directory containing either the training or test set
         :return: None
         """
@@ -101,7 +106,7 @@ class Bayespam():
                         token = re.sub(r'[^a-z]', '', token)
 
                         ##Only handles tokens with more than 3 characters
-                        if(len(token) > 3):
+                        if (len(token) > 3):
                             if token in self.vocab.keys():
                                 # If the token is already in the vocab, retrieve its counter
                                 counter = self.vocab[token]
@@ -136,7 +141,7 @@ class Bayespam():
                     token = re.sub(r'[^a-z]', '', token)
 
                     ##Only handles tokens with more than 3 characters
-                    if(len(token) > 3):
+                    if (len(token) > 3):
                         words.append(token)
 
         except Exception as e:
@@ -148,7 +153,6 @@ class Bayespam():
     def print_vocab(self):
         """
         Print each word in the vocabulary, plus the amount of times it occurs in regular and spam messages.
-
         :return: None
         """
         for word, counter in self.vocab.items():
@@ -158,7 +162,6 @@ class Bayespam():
     def write_vocab(self, destination_fp, sort_by_freq=False):
         """
         Writes the current vocabulary to a separate .txt file for easier inspection.
-
         :param destination_fp: Destination file path of the vocabulary file
         :param sort_by_freq: Set to True to sort the vocab by total frequency (descending order)
         :return: None
@@ -175,7 +178,8 @@ class Bayespam():
 
             for word, counter in vocab.items():
                 # repr(word) makes sure that special  characters such as \t (tab) and \n (newline) are printed.
-                f.write("%s | In regular: %d | In spam: %d\n" % (repr(word), counter.counter_regular, counter.counter_spam),)
+                f.write("%s | In regular: %d | In spam: %d\n" % (
+                repr(word), counter.counter_regular, counter.counter_spam), )
 
             f.close()
         except Exception as e:
@@ -201,26 +205,29 @@ class Bayespam():
         n_words_regular = 0
         n_words_spam = 0
 
+        ## count all the words appearing in regular messages and spam messages
         for word, counter in self.vocab.items():
             n_words_regular += counter.counter_regular
             n_words_spam += counter.counter_spam
 
+        ## in case of a zero probability, tuner is used instead
         epsilon = 1
         tuner = epsilon / (n_words_spam + n_words_regular)
-        tuner = math.log(10,tuner)
+        tuner = math.log(10, tuner)
 
+        ## compute for every word the two class conditional likelihoods
         for word, counter in self.vocab.items():
             temp_reg = counter.counter_regular / n_words_regular
             temp_spam = counter.counter_spam / n_words_spam
             if temp_reg != 0:
                 temp_reg = math.log(10, temp_reg)
                 self.class_conditional_regular[word] = temp_reg
-            else:
+            else: ## probability is zero, so tuner is used
                 self.class_conditional_regular[word] = tuner
             if temp_spam != 0:
                 temp_spam = math.log(10, temp_spam)
                 self.class_conditional_spam[word] = temp_spam
-            else:
+            else: ## probability is zero, so tuner is used
                 self.class_conditional_spam[word] = tuner
 
     def test(self):
@@ -236,7 +243,7 @@ class Bayespam():
         for msg in self.regular_list:
             ## The probabilities for this message start with the probability of any message to be regular or spam
             msg_prob_regular = self.priori_regular
-            msg_prob_spam = self.priori_spam 
+            msg_prob_spam = self.priori_spam
 
             ## Get all the words in this message
             message = self.read_words(msg)
@@ -258,7 +265,7 @@ class Bayespam():
         for msg in self.spam_list:
             ## The probabilities for this message start with the probability of any message to be regular or spam
             msg_prob_regular = self.priori_regular
-            msg_prob_spam = self.priori_spam 
+            msg_prob_spam = self.priori_spam
 
             ## Get all the words in this message
             message = self.read_words(msg)
@@ -277,10 +284,10 @@ class Bayespam():
                 spam_correct += 1
 
         all_msg = len(self.regular_list) + len(self.spam_list)
-        regular_correct = regular_correct/all_msg
-        regular_wrong = regular_wrong/all_msg
-        spam_correct = spam_correct/all_msg
-        spam_wrong = spam_wrong/all_msg
+        regular_correct = regular_correct / all_msg
+        regular_wrong = regular_wrong / all_msg
+        spam_correct = spam_correct / all_msg
+        spam_wrong = spam_wrong / all_msg
 
         accuracy = regular_correct + spam_correct
         print("True regular: ", regular_correct)
@@ -331,7 +338,6 @@ def main():
     ## Test
     bayespam.test()
 
-
     """
     Now, implement the follow code yourselves:
     check 1) A priori class probabilities must be computed from the number of regular and spam messages
@@ -341,9 +347,9 @@ def main():
     5) Bayes rule must be applied on new messages, followed by argmax classification
     6) Errors must be computed on the test set (FAR = false accept rate (misses), FRR = false reject rate (false alarms))
     7) Improve the code and the performance (speed, accuracy)
-
     Use the same steps to create a class BigramBayespam which implements a classifier using a vocabulary consisting of bigrams
     """
+
 
 if __name__ == "__main__":
     main()
