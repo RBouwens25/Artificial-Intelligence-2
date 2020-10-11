@@ -1,4 +1,6 @@
 """kmeans.py"""
+import math
+import random
 
 class Cluster:
     """This class represents the clusters, it contains the
@@ -10,7 +12,6 @@ class Cluster:
         self.prototype = [0.0 for _ in range(dim)]
         self.current_members = set()
         self.previous_members = set()
-
 
 class KMeans:
     def __init__(self, k, traindata, testdata, dim):
@@ -29,12 +30,63 @@ class KMeans:
         self.accuracy = 0
         self.hitrate = 0
 
+        self.seed = 14135
+
+    ##TODO: update prototypes
+    ## A function to handle updating prototypes
+    def updatePrototypes(self):
+        for i,_ in enumerate(self.clusters):
+            self.clusters[i].prototype = [0.0 for _ in range(self.dim)]
+            for d in range(self.dim):
+                dimSum = 0.0
+                for m in self.clusters[i].current_members:
+                    dimSum += self.traindata[m][d]
+                self.clusters[i].prototype[d] = dimSum / len(self.clusters[i].current_members)
+
+    ## A function to handle each step
+    def step(self):
+        ## move the current members to previous members and empty the set
+        for i,_ in enumerate(self.clusters):
+            self.clusters[i].previous_members = self.clusters[i].current_members
+            self.clusters[i].current_members = set()
+        ## calculate the distances to each prototype for each datapoint 
+        for m, datapoint in enumerate(self.traindata):
+            distances = [0.0 for _ in range(self.k)]
+            for c, cluster in enumerate(self.clusters):
+                distance_squared = 0.0
+                ##sum the squared distance between each point
+                for i in range(self.dim):
+                    distance_squared += (datapoint[i] - cluster.prototype[i]) ** 2 
+                ##add the euclidean distance to the array
+                distances[c] = math.sqrt(distance_squared)
+            ##select the closest cluster and assign the member to it
+            index_min = min(range(len(distances)), key=distances.__getitem__) 
+            self.clusters[index_min].current_members.add(m)
+
+    def isUnstable(self):
+        stable = True
+        for cluster in self.clusters:
+            if cluster.current_members != cluster.previous_members:
+                stable = False
+        return stable
+
     def train(self):
         # implement k-means algorithm here:
         # Step 1: Select an initial random partioning with k clusters
+        random.seed(self.seed)
+        for i in range(len(self.traindata)):
+            ##Choose a random cluster and assign the member to it
+            cluster = random.randrange(self.k)
+            self.clusters[cluster].current_members.add(i)
+        self.updatePrototypes()
         # Step 2: Generate a new partition by assigning each datapoint to its closest cluster center
+        self.step()
         # Step 3: recalculate cluster centers
+        self.updatePrototypes()
         # Step 4: repeat until clustermembership stabilizes
+        while self.isUnstable():
+            self.step()
+            self.updatePrototypes()
         pass
 
     def test(self):
