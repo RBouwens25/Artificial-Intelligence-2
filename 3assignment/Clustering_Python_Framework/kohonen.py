@@ -39,10 +39,8 @@ class Kohonen:
         #         Step 4: All nodes within the neighbourhood of the BMU are changed, you don't have to use distance relative learning.
         # Since training kohonen maps can take quite a while, presenting the user with a progress bar would be nice
 
-        ## do everything 'epochs times'
-        i = 0
-        while (i <= self.epochs):
-            i += 1
+        ## repeat everything in every epoch
+        for i in range(self.epochs):
             ## calculate size of the neighbourhood
             r = (self.n/2)*(1 - i/self.epochs)
             ## calculate learningrate
@@ -105,7 +103,6 @@ class Kohonen:
                 print()
 
     def print_prototypes(self):
-        np.set_printoptions(precision=4)
         for i in range(self.n):
             for j in range(self.n):
                print("Prototype cluster["+str(i)+"]["+str(j)+"] :", self.clusters[i][j].prototype)
