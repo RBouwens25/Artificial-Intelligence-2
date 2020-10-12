@@ -48,7 +48,7 @@ class Kohonen:
             ##step3
             for j, datapoint in enumerate(self.traindata):
                 ## calculate the distances to each prototype for each datapoint
-                distances = [[0.0 for _ in range(self.n)] for _ in range(self.n)]
+                distances = [[0.0]*self.n]*self.n
                 for row in range(self.n):
                     for col in range(self.n):
                         clus = self.clusters[row][col]
@@ -60,23 +60,27 @@ class Kohonen:
                 print(distances)
                 ##find the BMU, by seeking the minimal distance
                 minimal = min([min(r) for r in distances])
-                BMU = self.clusters[0][0]
-                for row1 in range(self.n):
-                    for col1 in range(self.n):
-                        if minimal == distances[row1][col1]:
-                            BMU = self.clusters[row1][col1]
+                bmu = None
+                for row in range(self.n):
+                    for col in range(self.n):
+                        if minimal == distances[row][col]:
+                            bmu = self.clusters[row][col]
                             break
-                for row2 in range(self.n):
-                    for col2 in range(self.n):
-                        curcol = self.clusters[row2][col2].prototype
-                        for i in range(self.n):
-                            ## TODO: this should have multiple if-statements, but i am not sure whether i am doing it correctly.
-                            ## It seems to me that you first need to make a list of nodes, and then change them. But also,
-                            ## i don't know if it is correct to change all the numbers in the vector.
-                            ## I'm afraid I did something wrong in the beginning :(
-                            if BMU.prototype[i] + r >= curcol[i]:
-                                self.clusters[row2][col2].prototype[i] = (1 - e) * self.clusters[row2][col2].prototype[i] + e * datapoint[i]
-        pass
+                    if bmu is not None:
+                        break
+                
+                # for row2 in range(self.n):
+                #     for col2 in range(self.n):
+                #         curcol = self.clusters[row2][col2].prototype
+                #         for i in range(self.n):
+                #             ## TODO: this should have multiple if-statements, but i am not sure whether i am doing it correctly.
+                #             ## It seems to me that you first need to make a list of nodes, and then change them. But also,
+                #             ## i don't know if it is correct to change all the numbers in the vector.
+                #             ## I'm afraid I did something wrong in the beginning :(
+                #             if bmu.prototype[i] + r >= curcol[i]:
+                #                 self.clusters[row2][col2].prototype[i] = (1 - e) * self.clusters[row2][col2].prototype[i] + e * datapoint[i]
+            
+
 
     def test(self):
         # iterate along all clients
