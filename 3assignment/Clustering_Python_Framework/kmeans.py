@@ -91,13 +91,28 @@ class KMeans:
 
     def test(self):
         # iterate along all clients. Assumption: the same clients are in the same order as in the testData
-        # for each client find the cluster of which it is a member
-        # get the actual testData (the vector) of this client
-        # iterate along all dimensions
-        # and count prefetched htmls
-        # count number of hits
-        # count number of requests
+        hits = 0
+        requests = 0
+        prefetched = 0
+        for i, client in enumerate(self.testdata):
+            # for each client find the cluster of which it is a member
+            # get the actual testData (the vector) of this client
+            for cluster in self.clusters:
+                if i in cluster.current_members:
+                    # iterate along all dimensions
+                    for d in range(self.dim):
+                        # and count prefetched htmls
+                        if cluster.prototype[d] >= self.prefetch_threshold:
+                            prefetched += 1
+                            # count number of hits
+                            if client[d]:
+                                hits += 1
+                        # count number of requests
+                        if client[d]:
+                            requests += 1
         # set the variables hitrate and accuracy to their appropriate value
+        self.accuracy = requests / prefetched
+        self.hitrate = hits / requests
         pass
 
 

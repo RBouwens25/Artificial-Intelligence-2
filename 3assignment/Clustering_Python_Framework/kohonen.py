@@ -7,6 +7,7 @@ class Cluster:
     prototype and a set with the ID's (which are Integer objects) 
     of the datapoints that are member of that cluster."""
     def __init__(self, dim):
+        ##Initialize cluster with random values
         self.prototype = [random.random() for _ in range(dim)]
         self.current_members = set()
 
@@ -30,7 +31,6 @@ class Kohonen:
 
 
     def train(self):
-        print(len(self.clusters[0][0].prototype))
         # Step 1: initialize map with random vectors (A good place to do this, is in the initialisation of the clusters)
         # Repeat 'epochs' times:
         #     Step 2: Calculate the square size and the learning rate, these decrease linearly with the number of epochs.
@@ -47,17 +47,16 @@ class Kohonen:
             e = 0.8 * (1- i/self.epochs)
             ##step3
             for j, datapoint in enumerate(self.traindata):
-                ## calculate the distances to each prototype for each datapoint
-                distances = [[0.0]*self.n]*self.n
+                ## calculate the distances to each node for the datapoint
+                distances = [[0.0 for _ in range(self.n)] for _ in range(self.n)]
                 for row in range(self.n):
                     for col in range(self.n):
-                        clus = self.clusters[row][col]
+                        node = self.clusters[row][col]
                         distance_squared = 0.0
                         for k in range(self.dim):
-                            distance_squared += (datapoint[k] - clus.prototype[k]) ** 2
+                            distance_squared += (datapoint[k] - node.prototype[k]) ** 2
                         ##add the euclidean distance to the 2d list
                         distances[row][col] = math.sqrt(distance_squared)
-                print(distances)
                 ##find the BMU, by seeking the minimal distance
                 minimal = min([min(r) for r in distances])
                 bmu = None
@@ -68,29 +67,64 @@ class Kohonen:
                             break
                     if bmu is not None:
                         break
-                
-                # for row2 in range(self.n):
-                #     for col2 in range(self.n):
-                #         curcol = self.clusters[row2][col2].prototype
-                #         for i in range(self.n):
-                #             ## TODO: this should have multiple if-statements, but i am not sure whether i am doing it correctly.
-                #             ## It seems to me that you first need to make a list of nodes, and then change them. But also,
-                #             ## i don't know if it is correct to change all the numbers in the vector.
-                #             ## I'm afraid I did something wrong in the beginning :(
-                #             if bmu.prototype[i] + r >= curcol[i]:
-                #                 self.clusters[row2][col2].prototype[i] = (1 - e) * self.clusters[row2][col2].prototype[i] + e * datapoint[i]
-            
+
+                ##Learning step
+                eta = self.initial_learning_rate * (1 - i/self.epochs)
+                for row in range(self.n):
+                    for col in range(self.n):
+                        node = self.clusters[row][col]
+                        distance_squared = 0.0
+                        for k in range(self.dim):
+                            distance_squared += (bmu.prototype[k] - node.prototype[k]) ** 2
+                        ## if the node is within the neighbourhood
+                        if(math.sqrt(distance_squared) <= r):
+                           ## Adjust node to be more like input vector
+                           for k in range(self.dim):
+                               old = node.prototype[k]
+                               self.clusters[row][col].prototype[k] = (1-eta) * old + eta * datapoint[k]
 
 
     def test(self):
         # iterate along all clients
-        # for each client find the cluster of which it is a member
-        # get the actual test data (the vector) of this client
-        # iterate along all dimensions
-        # and count prefetched htmls
-        # count number of hits
-        # count number of requests
+        prefetched = 0
+        hits = 0
+        requests = 0
+        for i, client in enumerate(self.traindata):
+            # for each client find the cluster of which it is a member
+            distances = [[0.0 for _ in range(self.n)] for _ in range(self.n)]
+            for row in range(self.n):
+                for col in range(self.n):
+                    node = self.clusters[row][col]
+                    distance_squared = 0.0
+                    for k in range(self.dim):
+                        distance_squared += (client[k] - node.prototype[k]) ** 2
+                    ##add the euclidean distance to the 2d list
+                    distances[row][col] = math.sqrt(distance_squared)
+            ##find the BMU, by seeking the minimal distance
+            minimal = min([min(r) for r in distances])
+            bmu = None
+            for row in range(self.n):
+                for col in range(self.n):
+                    if minimal == distances[row][col]:
+                        bmu = self.clusters[row][col]
+                        break
+                if bmu is not None:
+                    break
+            # get the actual test data (the vector) of this client
+            # iterate along all dimensions
+            for d in range(self.dim):
+                # and count prefetched htmls
+                if bmu.prototype[d] >= self.prefetch_threshold:
+                    prefetched += 1
+                    # count number of hits
+                    if client[d]:
+                        hits += 1
+                # count number of requests
+                if client[d]:
+                    requests += 1
         # set the global variables hitrate and accuracy to their appropriate value
+        self.accuracy = requests / prefetched 
+        self.hitrate = hits / requests 
         pass
 
     def print_test(self):
