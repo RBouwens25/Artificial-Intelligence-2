@@ -1,8 +1,12 @@
 ### code for representing/solving an MDP
+##Benjamin Dinh         s3427145
+## Rachelle Bouwens     s3661393
+## Janneke van Hulten   s3658384
 
 import random
 import numpy
 from problem_utils import *
+from operator import itemgetter
 numpy.warnings.filterwarnings('ignore')
 
 
@@ -47,7 +51,6 @@ class Map:
             ## 'Set each non-goal state’s utility to 0.'
             if not p.isGoal:
                 p.utility = 0.0
-        self.printValues()
 
         ## initialize list which will hold all the differences in utilities
         util_dif = []
@@ -55,13 +58,10 @@ class Map:
         while(1):
             for i in self.states.values():
                 current_state = i
-
                 ## current state is not a goal state
                 if not current_state.isGoal:
                     max1 = []
-                    for i, a in enumerate(current_state.actions):
-                       # ## find successor state if current action is done
-                       # suc = getSuccessor(current_state.coords, a)
+                    for a in current_state.actions:
                         ## find transitions of actions from current state
                         trans = current_state.transitions[a]
                         sum = 0
@@ -94,30 +94,47 @@ class Map:
     ### you write this method
     def policyIteration(self):
         for p in self.states.values():
-            ## 'Set each non-goal state’s utility to 0.'
             if not p.isGoal:
+                ## "Initialize the policy by chosing a random action to be performed in each non-goal state"
                 p.policy = random.choice(p.actions)
-                print("p.policy: ", p.policy)
 
         while(1):
+            ## "Calculate the utility estimates of all non-goal states under the current policy "
             self.calculateUtilitiesLinear()
-            for p in self.states.values():
-                surrounding = []
-                print("utilities: ", p.utility)
-                ## i think we need to find the utilities on all sides of p, and then change the policy of p according to which utility is highest?
-                for a in p.actions:
-                    trans = p.transitions[a]
-                    for x in trans:
-                        tr, st = x
-                        ## this is not correct, we need to save both the utility of the successor state and the action, but i have to go!
-                        surrounding.append(st.utility)
-
-
-
-
-
-        ### 1. initialize random policy
-        ### 2 repeat policy iteration loop until policy is stable
+            ## Use boolean change to check if policy has been changed when iterated over all the states
+            change = False
+            for i in self.states.values():
+                if not i.isGoal:
+                    max1 = []
+                    ## get transitions of current policy of current state
+                    trans2 = i.transitions[i.policy]
+                    sum2 = 0
+                    ## loop over those transitions and find the sum of all multiplications of probabilities and utilities of surrounding states
+                    for y in trans2:
+                        tr2, st2 = y
+                        sum2 = sum2 + tr2 * st2.utility
+                    ## loop over all actions to find the maximum sum, and its corresponding action
+                    for a in i.actions:
+                        ## find transitions of actions from current state
+                        trans = i.transitions[a]
+                        sum = 0
+                        ## loop through transitions, which consist of p and the state it will go to
+                        for x in trans:
+                            tr, st = x
+                            ## add the multiplication of that probability and its utility to the sum
+                            sum = sum + tr * st.utility
+                        ## add that action and sum to max1
+                        max1.append((a,sum))
+                    max_ult = max(max1, key=itemgetter(1))[1]
+                    ## find if newly found max sum is bigger than sum using the action from the orinigal
+                    if max_ult > sum2:
+                        ## if so, set policy to this new action
+                        i.policy = max(max1, key=itemgetter(1))[0]
+                        ## set change to True, so the while-loop continues
+                        change = True
+            ## if the policy didn't change at all, break from loop
+            if change == False:
+                break
 
 
     def calculateUtilitiesLinear(self):
