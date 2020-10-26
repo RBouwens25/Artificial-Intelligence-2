@@ -7,3 +7,10 @@ m2 = mdp.makeRNProblem()
 m2.policyIteration()
 m2.printActions()
 
+m3 = mdp.make2DProblem()
+m3.valueIteration()
+m3.printValues()
+
+m4 = mdp.make2DProblem()
+m4.policyIteration()
+m4.printActions()

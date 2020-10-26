@@ -95,7 +95,6 @@ class Map:
 
         ## Make sure the following while loop starts
         change = True
-
         ## Keep running as long as the policy changes
         while(change):
             ## Calculate the utility estimates of all non-goal states under the current policy
@@ -104,31 +103,33 @@ class Map:
             change = False
             for state in self.states.values():
                 if not state.isGoal:
-                    max1 = []
+                    max_util = -999999
+                    best_action = state.policy
                     ## get transitions of current policy of current state
-                    trans2 = state.transitions[state.policy]
-                    sum2 = 0
+                    transitions = state.transitions[state.policy]
+                    old_util = 0
                     ## loop over those transitions and find the sum of all multiplications of probabilities and utilities of surrounding states
-                    for y in trans2:
-                        tr2, st2 = y
-                        sum2 = sum2 + tr2 * st2.utility
+                    for transition in transitions:
+                        probability, new_state = transition
+                        old_util = old_util + probability * new_state.utility
                     ## loop over all actions to find the maximum sum, and its corresponding action
-                    for a in state.actions:
+                    for action in state.actions:
                         ## find transitions of actions from current state
-                        trans = state.transitions[a]
+                        transitions = state.transitions[action]
                         sum = 0
-                        ## loop through transitions, which consist of p and the state it will go to
-                        for x in trans:
-                            tr, st = x
+                        ## loop through transitions, which consist of a probability and the state it will go to
+                        for transition in transitions:
+                            probability, new_state = transition
                             ## add the multiplication of that probability and its utility to the sum
-                            sum = sum + tr * st.utility
-                        ## add that action and sum to max1
-                        max1.append((a,sum))
-                    max_util = max(max1, key=itemgetter(1))[1]
-                    ## find if newly found max sum is bigger than sum using the action from the original
-                    if max_util > sum2:
+                            sum = sum + probability * new_state.utility
+                        ## if the utility of this action is better, this becomes the new best action
+                        if sum > max_util:
+                            max_util = sum
+                            best_action = action
+                    ## check if newly found max utility is bigger than the old utility
+                    if max_util > old_util:
                         ## if so, set policy to this new action
-                        state.policy = max(max1, key=itemgetter(1))[0]
+                        state.policy = best_action
                         ## set change to True, so the while-loop continues
                         change = True
 
