@@ -1,5 +1,5 @@
 ### code for representing/solving an MDP
-##Benjamin Dinh         s3427145
+## Benjamin Dinh        s3427145
 ## Rachelle Bouwens     s3661393
 ## Janneke van Hulten   s3658384
 
@@ -45,78 +45,77 @@ class Map:
         ACTIONS = 0
         VALUES = 1
 
-    ### you write this method
+    ## Method that defines value iteration
     def valueIteration(self):
+        ## Set each non-goal state’s utility to 0
         for p in self.states.values():
-            ## 'Set each non-goal state’s utility to 0.'
             if not p.isGoal:
                 p.utility = 0.0
 
-        ## initialize list which will hold all the differences in utilities
-        util_dif = []
+        ## Make sure that the next while loop starts
+        max_diff = self.stop_crit
 
-        while(1):
-            for i in self.states.values():
-                current_state = i
+        ## Keep running until the maximum change in utility is smaller than the stop criterion
+        while(max_diff >= self.stop_crit):
+            ## Reset max_diff for a new loop
+            max_diff = 0
+            for state in self.states.values():
                 ## current state is not a goal state
-                if not current_state.isGoal:
-                    max1 = []
-                    for a in current_state.actions:
+                if not state.isGoal:
+                    max_util = 0
+                    for action in state.actions:
                         ## find transitions of actions from current state
-                        trans = current_state.transitions[a]
+                        transitions = state.transitions[action]
                         sum = 0
-                        ## loop through transitions, which consist of p and the state it will go to
-                        for x in trans:
-                            tr, st = x
+                        ## loop through transitions, which consist of a probability and the state it will go to
+                        for transition in transitions:
+                            probability, new_state = transition
                             ## add the multiplication of that probability and its utility to the sum
-                            sum = sum + tr * st.utility
-                        ## add the sum for all the different transitions for the one action to max1
-                        max1.append(sum)
-                    ## get the maximal sum, which indicates which of the four actions is best
-                    max_ult = max(max1)
-                    ## find the new utility of the current state, using the max_ult
-                    util = current_state.reward + self.gamma * max_ult
+                            sum = sum + probability * new_state.utility
+                        ## if the sum for this action is larger than max, this is the new max
+                        if sum > max_util:
+                            max_util = sum
+                    ## find the new utility of the current state, using the max_util
+                    utility = state.reward + self.gamma * max_util
                     ## find the difference between the old utility and the new utility
-                    dif = abs(util - current_state.utility)
-                    ## add this difference to util_dif
-                    util_dif.append(dif)
-                    ## set the utility of the current_state to the newly found utility
-                    current_state.utility = util
-            ## find the maximal difference of all the utilities
-            max_dif = max(util_dif)
-            ## if this maximal difference is smaller than the stop criterium, break
-            if (max_dif < self.stop_crit):
-                break
-            util_dif = []
+                    diff = abs(utility - state.utility)
+                    ## update max_diff if this value is larger
+                    if diff > max_diff:
+                        max_diff = diff
+                    ## set the utility of the state to the newly found utility
+                    state.utility = utility
 
 
-
-    ### you write this method
+    ## Method that defines policy iteration
     def policyIteration(self):
-        for p in self.states.values():
-            if not p.isGoal:
-                ## "Initialize the policy by chosing a random action to be performed in each non-goal state"
-                p.policy = random.choice(p.actions)
+        ## Initialize the policy by chosing a random action to be performed in each non-goal state
+        for state in self.states.values():
+            if not state.isGoal:
+                state.policy = random.choice(state.actions)
 
-        while(1):
-            ## "Calculate the utility estimates of all non-goal states under the current policy "
+        ## Make sure the following while loop starts
+        change = True
+
+        ## Keep running as long as the policy changes
+        while(change):
+            ## Calculate the utility estimates of all non-goal states under the current policy
             self.calculateUtilitiesLinear()
             ## Use boolean change to check if policy has been changed when iterated over all the states
             change = False
-            for i in self.states.values():
-                if not i.isGoal:
+            for state in self.states.values():
+                if not state.isGoal:
                     max1 = []
                     ## get transitions of current policy of current state
-                    trans2 = i.transitions[i.policy]
+                    trans2 = state.transitions[state.policy]
                     sum2 = 0
                     ## loop over those transitions and find the sum of all multiplications of probabilities and utilities of surrounding states
                     for y in trans2:
                         tr2, st2 = y
                         sum2 = sum2 + tr2 * st2.utility
                     ## loop over all actions to find the maximum sum, and its corresponding action
-                    for a in i.actions:
+                    for a in state.actions:
                         ## find transitions of actions from current state
-                        trans = i.transitions[a]
+                        trans = state.transitions[a]
                         sum = 0
                         ## loop through transitions, which consist of p and the state it will go to
                         for x in trans:
@@ -125,16 +124,13 @@ class Map:
                             sum = sum + tr * st.utility
                         ## add that action and sum to max1
                         max1.append((a,sum))
-                    max_ult = max(max1, key=itemgetter(1))[1]
-                    ## find if newly found max sum is bigger than sum using the action from the orinigal
-                    if max_ult > sum2:
+                    max_util = max(max1, key=itemgetter(1))[1]
+                    ## find if newly found max sum is bigger than sum using the action from the original
+                    if max_util > sum2:
                         ## if so, set policy to this new action
-                        i.policy = max(max1, key=itemgetter(1))[0]
+                        state.policy = max(max1, key=itemgetter(1))[0]
                         ## set change to True, so the while-loop continues
                         change = True
-            ## if the policy didn't change at all, break from loop
-            if change == False:
-                break
 
 
     def calculateUtilitiesLinear(self):
